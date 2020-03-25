@@ -14,6 +14,14 @@ int main()
 		scanf("%d %d", &f, &s);
 		arr[f][s] = 1;
 	}
+	
+	for (int i=1; i<=n; i++)
+	{
+		for (int j=1; j<=n; j++)
+			printf("%d ", arr[i][j]);
+		printf("\n");
+	}
+	printf("\n");
 	for (int k = 1; k <= n; k++)
 		for (int i = 1; i <= n; i++)
 			for (int j = 1; j <= n; j++)
