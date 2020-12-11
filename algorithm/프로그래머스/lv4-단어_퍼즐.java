@@ -2,36 +2,24 @@ import java.util.*;
 
 class Solution {
     public int solution(String[] strs, String t) {
+        
+        boolean[] check = new boolean[t.length()+1];
         int size = t.length();
-        Set<String> dic = new HashSet<String>();
-        Set<Integer> dicInt = new HashSet<Integer>();
-        for (String s : strs){
-            dic.add(s);
-            dicInt.add(s.length());
-        }
-        boolean[] check = new boolean[size+1];
-        int[] result = new int[size+1];
-        int answer=Integer.MAX_VALUE;
-        check[0]=true;
+        int[] dp = new int[t.length()+1];
+        check[0] = true;
+        
         for (int i=0; i<size; i++){
-            if (check[i] == false)
-                continue;
-            for (int word : dicInt){
-                int j = i + word;
-                if (j <= size && dic.contains(t.substring(i,j))){
-                    check[j]=true;
-                    int r = result[j]==0||result[j]>result[i]+1?result[i]+1:result[j];
-                    if (j == size){
-                        if (answer > r)
-                            answer=r;
-                    }else{
-                        result[j]=r;
-                    }
+            if (check[i] == false) continue;
+            
+            for (String str : strs){
+                if (t.startsWith(str, i)){
+                    int l = i+str.length();
+                    check[l] = true;
+                    dp[l] = dp[l] > 0 && dp[i]+1 > dp[l] ? dp[l] : dp[i]+1;
                 }
             }
         }
-        if (check[size] == false)
-            return -1;
-        return answer;
+        
+        return check[size] ? dp[size] : -1;
     }
 }
