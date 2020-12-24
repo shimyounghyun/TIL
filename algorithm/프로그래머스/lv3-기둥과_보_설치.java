@@ -1,108 +1,67 @@
 import java.util.*;
-
+import java.util.stream.*;
 class Solution {
     final int INS = 1; //설치
     final int DEL = 0; //삭제
-    final int PI = 2; //기둥
-    final int BO = 1; //보
+    List<int[]> list = new LinkedList<>();
+    int[][] map;
     
-    public boolean hasBO(int num){
-        return (num&BO) != 0 ? true : false;
-    }
-    
-    public boolean hasPI(int num){
-        return (num&PI) != 0 ? true : false;
-    }
-    
-    public boolean canIns(int[][] m, int x, int y, int a){
-        if (a == PI){ //기둥 설치
-            if (y == 0)
-                return true;
-            if (hasPI(m[y-1][x]))
-                return true;
-            if (x == 0 && hasBO(m[y][x]))
-                return true;
-            if (x > 0 && (hasBO(m[y][x]) || hasBO(m[y][x-1])))
-                return true;
-        }else{ //보 설치
-            if (hasPI(m[y-1][x]) || hasPI(m[y-1][x+1]) 
-                || (x > 0 && hasBO(m[y][x-1]) && hasBO(m[y][x+1])))
-                return true;
+    public void install(int x, int y, int el){
+        if (isPossible(x, y, el+1)){
+            map[y][x] = (map[y][x]|(el+1));
+            list.add(new int[]{x, y, el});
         }
+    }
+    
+    public void delete(int x, int y, int el){
+        map[y][x] = (map[y][x] & ~(el+1));
+        for (int[] arr : list){
+            if (isPossible(arr[0], arr[1], arr[2]+1) == false){
+                map[y][x] = (map[y][x]|(el+1));
+                return;
+            }
+        }
+        list = list.stream()
+            .filter(v -> !Arrays.equals(v, new int[]{x, y, el}))
+            .collect(Collectors.toList());
+    }
+    
+    public boolean isPossible(int x, int y, int el){
+       if (el == 1){ // 기둥
+           if (y == 0 || (map[y-1][x]&1) == 1 
+               || (map[y][x]>>1&1) == 1 || (x > 0 && (map[y][x-1]>>1&1) == 1))
+               return true;
+       }else{ // 보
+           if ((map[y-1][x]&1) == 1 || (map[y-1][x+1]&1) == 1 
+              || ((map[y][x+1]>>1&1) ==1 && (x>0 && (map[y][x-1]>>1&1) == 1)))
+               return true;
+       }
         return false;
     }
     
-    public boolean canDel(int[][] m, int x, int y, int a){
-        int[] dirI = {1,1,1,0,0,-1,-1,-1,0};
-        int[] dirJ = {-1,0,1,-1,1,-1,0,1,0};
-        boolean result=true;
-        m[y][x] = m[y][x] & ~a;
-        for (int i=0; i<9; i++){
-            if (y+dirI[i]<0 || y+dirI[i] >= m.length
-               || x+dirJ[i]<0 || y+dirJ[i] >= m.length
-               || m[y+dirI[i]][x+dirJ[i]] == 0)
-                continue;
-            if(canIns(m,x+dirJ[i],y+dirI[i],m[y+dirI[i]][x+dirJ[i]]) == false){
-                result = false;
-                break;
-            }
-        }
-        m[y][x] |= a;
-        return result;
-    }
-    
     public int[][] solution(int n, int[][] build_frame) {
-        int[][] map = new int[n+1][n+1];
-        int count = 0;
-        for (int[] data : build_frame){
-            int x = data[0];
-            int y = data[1];
-            int a = data[2] == 1 ? 1 : 2; //보 01, 기둥 10
-            int b = data[3]; //설치 1,삭제0
-            switch (b){
-                case INS :
-                    if (canIns(map, x, y, a)){
-                        map[y][x] |= a;
-                        count++;
-                    }
-                    break;
-                case DEL :
-                    if (canDel(map, x, y, a)){
-                        map[y][x] = map[y][x]&~a;
-                        count--;
-                    }
-                    break;
-            }
+        map = new int[n+1][n+1];
+        
+        for (int[] bf : build_frame){
+            int x = bf[0];
+            int y = bf[1];
+            int el = bf[2];
+            int op = bf[3];
+            if (op == INS)
+                install(x, y, el);
+            else
+                delete(x, y, el);
         }
-        int[][] result = new int[count][3];
-        int index = 0;
-        for (int i=0; i<=n; i++){
-            for (int j=0; j<=n; j++){
-                if (hasBO(map[i][j])){
-                    result[index][0]=j;
-                    result[index][1]=i;
-                    result[index][2]=1;
-                    index++;
-                }
-                if (hasPI(map[i][j])){
-                    result[index][0]=j;
-                    result[index][1]=i;
-                    result[index][2]=0;
-                    index++;
-                }
-            }
-        }
-        Arrays.sort(result, (o1, o2)->{
-            if (o1[0] == o2[0]){
-                if(o1[1] == o2[1]){
-                    return Integer.compare(o1[2],o2[2]);
-                }else{
-                    return Integer.compare(o1[1],o2[1]);    
-                }
-            }else {
-                return Integer.compare(o1[0],o2[0]);
-            }
+        
+        Collections.sort(list, (a,b)->{
+            if (a[0] != b[0]) return Integer.compare(a[0], b[0]);
+            if (a[1] != b[1]) return Integer.compare(a[1], b[1]);
+            return Integer.compare(a[2], b[2]);
         });
-        return result;
+        
+        list.stream()
+            .forEach(v -> System.out.println(Arrays.toString(v)));
+        
+        return list.toArray(new int[list.size()][3]);
     }
 }
